@@ -408,7 +408,11 @@ defmodule Lua.VM.UpvalueTest do
       """
 
       assert {:ok, ast} = Parser.parse(code)
-      assert {:ok, proto} = Compiler.compile(ast, source: "test.lua")
+      # The watermark is a scope-analysis property, so read it off the raw
+      # codegen stream. This chunk creates no closures, so the peephole pass
+      # drops the `close_upvalues` opcodes it would otherwise be observed
+      # through — correctly, but that hides what is under test here.
+      assert {:ok, proto} = Compiler.compile(ast, source: "test.lua", peephole: false)
 
       thresholds =
         for {:numeric_for, _target, _base, opts} <- proto.instructions, do: Keyword.fetch!(opts, :close_upvalues)
